@@ -12,7 +12,7 @@ en aplicaciones PHP (Slim 4).
 ## Instalacion
 
 ```bash
-composer require kosciuk/problem
+composer require linkedcode/problem
 ```
 
 ## Uso con Slim 4
