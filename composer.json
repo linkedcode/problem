@@ -1,5 +1,5 @@
 {
-    "name": "linkedcode/problem",
+    "name": "linkedcode/problem-middleware",
     "description": "Problem Details Middleware",
     "type": "library",
     "license": "GPL-3.0-or-later",

@@ -1,4 +1,4 @@
-# linkedcode/problem
+# linkedcode/problem-middleware
 
 Middleware y utilidades para responder errores HTTP con formato
 [RFC 7807 / Problem Details](https://datatracker.ietf.org/doc/html/rfc7807)
@@ -12,7 +12,7 @@ en aplicaciones PHP (Slim 4).
 ## Instalacion
 
 ```bash
-composer require linkedcode/problem
+composer require linkedcode/problem-middleware
 ```
 
 ## Uso con Slim 4
