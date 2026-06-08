@@ -9,17 +9,20 @@ use Linkedcode\Middleware\Problem\ValidationError;
 final class ValidationException extends ProblemException
 {
     protected int $status = 422;
-    protected string $title = 'Validation Error';
+    protected string $title = 'Unprocessable Entity';
 
-    /**
-     * @param ValidationError[] $errors
-     */
-    public function __construct(array $errors)
+    /** @param ValidationError[] $errors */
+    public function __construct(private readonly array $errors)
     {
         parent::__construct('Validation failed');
-        $this->extensions['errors'] = array_map(
-            static fn(ValidationError $error): array => $error->toArray(),
-            $errors
-        );
+        $this->extensions = [
+            'errors' => array_map(fn(ValidationError $e) => $e->toArray(), $errors),
+        ];
+    }
+
+    /** @return ValidationError[] */
+    public function errors(): array
+    {
+        return $this->errors;
     }
 }
