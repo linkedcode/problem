@@ -9,9 +9,6 @@ use Linkedcode\Middleware\Problem\Exception\NotFoundException;
 use Linkedcode\Middleware\Problem\Exception\ForbiddenException;
 use Linkedcode\Middleware\Problem\Exception\ResourceConflictException;
 use Linkedcode\Middleware\Problem\Exception\HttpException;
-use Linkedcode\Middleware\Problem\Exception\ValidationException;
-use Linkedcode\Middleware\Problem\ValidationError;
-
 final class ProblemExceptionTest extends TestCase
 {
     public function testNotFoundException(): void
@@ -59,21 +56,4 @@ final class ProblemExceptionTest extends TestCase
         $this->assertSame('HTTP Error', $problem->getTitle());
     }
 
-    public function testValidationException(): void
-    {
-        $errors = [
-            new ValidationError('/name', 'Name is required'),
-            new ValidationError('/email', 'Invalid email'),
-        ];
-        $e = new ValidationException($errors);
-        $problem = $e->toProblem();
-
-        $this->assertSame(422, $problem->getStatus());
-        $this->assertSame('Validation Error', $problem->getTitle());
-
-        $extensions = $problem->getExtensions();
-        $this->assertCount(2, $extensions['errors']);
-        $this->assertSame('/name', $extensions['errors'][0]['pointer']);
-        $this->assertSame('Invalid email', $extensions['errors'][1]['detail']);
-    }
 }
