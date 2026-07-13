@@ -100,13 +100,18 @@ el mapper las traduce a `Problem`.
 
 ## Integracion con Slim 4
 
-```php
-use Linkedcode\Middleware\Problem\Integration\SlimErrorHandler;
+Registrar `ProblemDetailsMiddleware` en la pila de la app (no usar
+`addErrorMiddleware`/`setDefaultErrorHandler` de Slim, este middleware ya
+cubre todo el `Throwable` y hace el logueo):
 
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
-$errorMiddleware->setDefaultErrorHandler(
-    new SlimErrorHandler($mapper, $responseFactory)
-);
+```php
+use Linkedcode\Middleware\Problem\Middleware\ProblemDetailsMiddleware;
+
+$app->add(new ProblemDetailsMiddleware(
+    $mapper,
+    $responseFactory,
+    $logger
+));
 ```
 
 ## Respuesta de ejemplo
