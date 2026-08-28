@@ -13,7 +13,8 @@
     "psr/http-message": "^2.0",
     "psr/http-server-middleware": "^1.0",
     "slim/slim": "^4.0",
-    "phpstan/phpstan": "^2.0"
+    "phpstan/phpstan": "^2.0",
+    "slim/psr7": "^1.6"
   },
   "suggest": {
     "psr/http-server-handler": "Required by applications to run PSR-15 middleware pipelines"
