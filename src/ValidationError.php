@@ -14,6 +14,7 @@ final class ValidationError
     public function field(): string   { return $this->field; }
     public function message(): string { return $this->message; }
 
+    /** @return array{field: string, message: string} */
     public function toArray(): array
     {
         return [

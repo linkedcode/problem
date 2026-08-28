@@ -13,6 +13,7 @@ abstract class ProblemException extends RuntimeException
     protected int $status = 500;
     protected string $type = 'about:blank';
     protected string $title = 'Internal Server Error';
+    /** @var array<string, mixed> */
     protected array $extensions = [];
 
     public function toProblem(): ProblemInterface

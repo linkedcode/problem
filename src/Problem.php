@@ -12,6 +12,7 @@ final class Problem implements ProblemInterface
         private readonly int $status,
         private readonly ?string $detail = null,
         private readonly ?string $instance = null,
+        /** @var array<string, mixed> */
         private readonly array $extensions = []
     ) {}
 
@@ -20,5 +21,6 @@ final class Problem implements ProblemInterface
     public function getStatus(): int { return $this->status; }
     public function getDetail(): ?string { return $this->detail; }
     public function getInstance(): ?string { return $this->instance; }
+    /** @return array<string, mixed> */
     public function getExtensions(): array { return $this->extensions; }
 }

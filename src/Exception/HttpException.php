@@ -6,6 +6,7 @@ namespace Linkedcode\Middleware\Problem\Exception;
 
 class HttpException extends ProblemException
 {
+    /** @param array<string, mixed> $extensions */
     public function __construct(
         int $status,
         string $message = '',

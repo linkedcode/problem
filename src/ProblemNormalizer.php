@@ -6,6 +6,7 @@ namespace Linkedcode\Middleware\Problem;
 
 final class ProblemNormalizer
 {
+    /** @return array<string, mixed> */
     public function normalize(ProblemInterface $problem): array
     {
         $data = array_filter([

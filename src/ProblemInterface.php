@@ -11,5 +11,6 @@ interface ProblemInterface
     public function getStatus(): int;
     public function getDetail(): ?string;
     public function getInstance(): ?string;
+    /** @return array<string, mixed> */
     public function getExtensions(): array;
 }
