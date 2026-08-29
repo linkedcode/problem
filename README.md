@@ -50,8 +50,9 @@ final class MiExceptionMapper extends DefaultExceptionMapper
 {
     public function map(Throwable $e): ProblemInterface
     {
-        if ($e instanceof UnauthorizedException) {
-            return new Problem('about:blank', 'Unauthorized', 401, $e->getMessage());
+        // Solo lo propio de esta app; el resto ya lo cubre el padre.
+        if ($e instanceof PaymentGatewayTimeout) {
+            return new Problem('about:blank', 'Bad Gateway', 502, 'El proveedor de pagos no respondió.');
         }
 
         return parent::map($e);
