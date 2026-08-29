@@ -28,10 +28,18 @@ $middleware = new ProblemDetailsMiddleware(
 
 ### `DefaultExceptionMapper`
 
-Cubre tres familias, en orden: las `ProblemException` de este paquete (que ya
-traen status), las interfaces de excepción de `linkedcode/ddd` — reconocidas por
-nombre, así que si no tenés ese paquete simplemente nunca hacen match — y por
-último `InvalidArgumentException` → 422 y cualquier otra cosa → 500.
+Cubre cuatro familias, en orden:
+
+1. Las `ProblemException` de este paquete, que ya traen su status.
+2. Las excepciones de `auth-middleware`: `UnauthorizedException` → 401,
+   `ForbiddenException` → 403.
+3. Las interfaces de excepción de `linkedcode/ddd`: `ValidationException` → 422
+   (con los errores por campo en `errors`), `NotFoundException` → 404,
+   `ForbiddenException` → 403, `ConflictException` → 409.
+4. `InvalidArgumentException` → 422 y cualquier otra cosa → 500.
+
+Los grupos 2 y 3 se reconocen por nombre, así que si no tenés esos paquetes
+instalados simplemente nunca hacen match: este middleware no depende de ellos.
 
 Lo habitual es extenderlo y delegar el resto en `parent`:
 

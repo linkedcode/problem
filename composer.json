@@ -29,7 +29,8 @@
       "Linkedcode\\Middleware\\Problem\\Tests\\": "tests/"
     },
     "files": [
-      "tests/kernel-exception-stubs.php"
+      "tests/kernel-exception-stubs.php",
+      "tests/auth-exception-stubs.php"
     ]
   },
   "scripts": {

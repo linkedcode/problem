@@ -27,6 +27,16 @@ final class DefaultExceptionMapperTest extends TestCase
         self::assertSame(418, $this->mapper->map(new HttpException(418, 'soy una tetera'))->getStatus());
     }
 
+    public function test_maps_auth_exceptions_to_401_and_403(): void
+    {
+        // auth-middleware lanza estas desde ApiStrategy; sin reconocerlas, una
+        // request sin credenciales devolvía 500 en vez de 401.
+        self::assertSame(401, $this->mapper->map(AuthExceptions::unauthorized('sin token'))->getStatus());
+        self::assertSame('Unauthorized', $this->mapper->map(AuthExceptions::unauthorized())->getTitle());
+        self::assertSame(403, $this->mapper->map(AuthExceptions::forbidden())->getStatus());
+        self::assertSame('Forbidden', $this->mapper->map(AuthExceptions::forbidden())->getTitle());
+    }
+
     public function test_maps_kernel_not_found_to_404(): void
     {
         $problem = $this->mapper->map(KernelExceptions::notFound('address no existe'));
