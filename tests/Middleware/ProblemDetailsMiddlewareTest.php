@@ -101,6 +101,121 @@ final class ProblemDetailsMiddlewareTest extends TestCase
         $this->assertInstanceOf(Throwable::class, $logger->records[0]['context']['exception']);
     }
 
+    public function testTheLoggerGetsTheRequestThatFailed(): void
+    {
+        $logger = new CollectingLogger();
+        $middleware = $this->middleware(
+            $this->mapperReturning(new Problem('about:blank', 'Not Found', 404, 'Not found.')),
+            logger: $logger
+        );
+
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('POST', 'https://example.test/orders/42?page=2', ['REMOTE_ADDR' => '203.0.113.7'])
+            ->withHeader('User-Agent', 'curl/8.5.0')
+            ->withHeader('Referer', 'https://example.test/cart')
+            ->withHeader('X-Request-Id', 'req-abc');
+
+        $middleware->process($request, $this->throwingHandler());
+
+        $context = $logger->records[0]['context'];
+
+        $this->assertSame('POST', $context['method']);
+        $this->assertSame('/orders/42', $context['path']);
+        $this->assertSame('curl/8.5.0', $context['user_agent']);
+        $this->assertSame('https://example.test/cart', $context['referer']);
+        $this->assertSame('req-abc', $context['request_id']);
+        $this->assertSame('203.0.113.7', $context['ip']);
+    }
+
+    public function testAbsentRequestDetailsAreOmittedRatherThanLoggedEmpty(): void
+    {
+        $logger = new CollectingLogger();
+        $middleware = $this->middleware(
+            $this->mapperReturning(new Problem('about:blank', 'Not Found', 404, 'Not found.')),
+            logger: $logger
+        );
+
+        $middleware->process($this->request(), $this->throwingHandler());
+
+        $context = $logger->records[0]['context'];
+
+        $this->assertSame('/', $context['path']);
+        $this->assertArrayNotHasKey('query', $context);
+        $this->assertArrayNotHasKey('route', $context);
+        $this->assertArrayNotHasKey('referer', $context);
+        $this->assertArrayNotHasKey('ip', $context);
+    }
+
+    public function testTheMatchedRoutePatternIsLoggedWhenRoutingResolved(): void
+    {
+        $logger = new CollectingLogger();
+        $middleware = $this->middleware(
+            $this->mapperReturning(new Problem('about:blank', 'Internal Server Error', 500, 'boom')),
+            logger: $logger
+        );
+
+        // Read structurally, so anything exposing getPattern() works.
+        $route = new class {
+            public function getPattern(): string
+            {
+                return '/orders/{id}';
+            }
+        };
+
+        $request = $this->request()->withAttribute('__route__', $route);
+
+        $middleware->process($request, $this->throwingHandler());
+
+        $this->assertSame('/orders/{id}', $logger->records[0]['context']['route']);
+    }
+
+    public function testTheQueryStringNeverReachesTheLog(): void
+    {
+        $logger = new CollectingLogger();
+        $middleware = $this->middleware(
+            $this->mapperReturning(new Problem('about:blank', 'Not Found', 404, 'Not found.')),
+            logger: $logger
+        );
+
+        $request = (new ServerRequestFactory())->createServerRequest(
+            'GET',
+            'https://example.test/callback?code=super-secret&page=2'
+        );
+
+        $middleware->process($request, $this->throwingHandler());
+
+        $context = $logger->records[0]['context'];
+
+        // The path still identifies what was requested; the parameters do not
+        // get logged at all, sensitive or otherwise.
+        $this->assertSame('/callback', $context['path']);
+        $this->assertArrayNotHasKey('query', $context);
+        $this->assertStringNotContainsString(
+            'super-secret',
+            json_encode(array_diff_key($context, ['exception' => null]))
+        );
+    }
+
+    public function testAuthorizationAndCookieHeadersNeverReachTheLog(): void
+    {
+        $logger = new CollectingLogger();
+        $middleware = $this->middleware(
+            $this->mapperReturning(new Problem('about:blank', 'Not Found', 404, 'Not found.')),
+            logger: $logger
+        );
+
+        $request = $this->request()
+            ->withHeader('Authorization', 'Bearer super-secret-jwt')
+            ->withHeader('Cookie', 'session=super-secret-session');
+
+        $middleware->process($request, $this->throwingHandler());
+
+        $encoded = json_encode(array_diff_key($logger->records[0]['context'], ['exception' => null]));
+
+        $this->assertStringNotContainsString('super-secret-jwt', $encoded);
+        $this->assertStringNotContainsString('super-secret-session', $encoded);
+    }
+
     public function testSuccessfulRequestsPassThroughUntouched(): void
     {
         $middleware = $this->middleware($this->mapperReturning(

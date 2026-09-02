@@ -25,7 +25,8 @@ use Linkedcode\Middleware\Problem\ProblemResponseFactory;
  * mapper that forwards $e->getMessage() into the detail — the natural way to
  * write one — otherwise leaks database names, table names, file paths and SQL
  * to the client on every unexpected failure. The full exception always reaches
- * the logger regardless.
+ * the logger regardless, together with the method, path, matched route and
+ * caller of the request that failed.
  *
  * Set $debug to true in local development to see the real detail in the
  * response body. Never enable it in production.
@@ -59,11 +60,59 @@ final class ProblemDetailsMiddleware implements MiddlewareInterface
             $this->logger->log(
                 $problem->getStatus() >= 500 ? LogLevel::ERROR : LogLevel::WARNING,
                 $e->getMessage(),
-                ['exception' => $e, 'status' => $problem->getStatus()]
+                [
+                    'exception' => $e,
+                    'status'    => $problem->getStatus(),
+                ] + $this->requestContext($request)
             );
 
             return $this->responseFactory->create($this->scrub($problem), $request);
         }
+    }
+
+    /**
+     * What was being requested when it failed. Without this a logged
+     * "Not found." names the middleware that threw and nothing about the URL
+     * the caller asked for, which is the only thing an operator needs.
+     *
+     * Authorization and Cookie headers are never included, and neither is the
+     * query string: an error log is read by more people, and kept longer, than
+     * the request itself.
+     *
+     * @return array<string, string>
+     */
+    private function requestContext(ServerRequestInterface $request): array
+    {
+        $uri = $request->getUri();
+
+        $context = [
+            'method' => $request->getMethod(),
+            'path'   => $uri->getPath(),
+        ];
+
+        // The matched route pattern ("/orders/{id}"), when routing got that
+        // far — it groups errors that a raw path scatters. Read structurally
+        // so the package keeps working without depending on Slim.
+        $route = $request->getAttribute('__route__');
+        if (is_object($route) && method_exists($route, 'getPattern')) {
+            $pattern = $route->getPattern();
+            if (is_string($pattern) && $pattern !== '') {
+                $context['route'] = $pattern;
+            }
+        }
+
+        foreach (['referer' => 'Referer', 'user_agent' => 'User-Agent', 'request_id' => 'X-Request-Id'] as $key => $header) {
+            if ($request->hasHeader($header)) {
+                $context[$key] = $request->getHeaderLine($header);
+            }
+        }
+
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        if (is_string($remoteAddr) && $remoteAddr !== '') {
+            $context['ip'] = $remoteAddr;
+        }
+
+        return $context;
     }
 
     /**
